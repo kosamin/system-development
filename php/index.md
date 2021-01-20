@@ -439,3 +439,122 @@ echo $digitalClock->getColor();
 
 ※抽象メソッド
 スーパークラスの機能を拡張したサブクラスを派生する役割
+
+
+
+## 例外処理
+#### Exception クラスのプロパティ/メソッド
+- $exception->getMessage()  
+例外メッセージを取得
+- $exception->getTrace()  
+例外処理のトレース情報を取得
+```
+class ClassA
+{
+    public function methodA(): void
+    {
+        $classB = new ClassB();
+        $classB->methodB();
+        echo 'methodA completed.'; // この行は実行されない
+    }
+}
+class ClassB
+{
+    public function methodB(): void
+    {
+        throw new Exception('methodBでエラー発生');
+        echo 'methodB completed.'; // この行は実行されない
+    }
+}
+try {
+    $classA = new ClassA();
+    $classA->methodA();
+} catch (Exception $exception) {
+    echo 'メインルーチンで例外をキャッチ。エラー内容：' , $exception->getMessage(), PHP_EOL;
+
+    file_put_contents("test.log", print_r($exception->getMessage(), true) ."\n",FILE_APPEND);　
+    ＃methodBでエラー発生
+
+    file_put_contents("test.log", print_r($exception->getTrace(), true) ."\n",FILE_APPEND);
+    #Array (
+                [0] => Array
+                    (
+                        [file] => /var/www/html/index.php
+                        [line] => 24
+                        [function] => methodA
+                        [class] => ClassA
+                        [type] => ->
+                        [args] => Array
+                            (
+                            )
+                    )
+            )
+}
+```
+
+## シャローコピー/ディープコピー
+- シャローコピー
+１つのインスタンスのパラメータを参照する状態を持ち、インスタンスのコピーを作成する。
+パラメータを変更した場合、コピーされた全てのインスタンスのパラメータが変更される。
+
+- ディープコピー
+インスタンス自体を複製し、１つのパラメータを参照する状態を持たずにインスタンスのコピーを作成する。
+パラメータを変更しても、他のインスタンスのパラメータには影響がない。
+```
+// 住所クラス
+class Address
+{
+    // 都道府県
+    public $prefecture;
+
+    // 市区町村
+    public $city;
+
+    // コンストラクタ
+    public function __construct(string $prefecture, string $city)
+    {
+        $this->prefecture = $prefecture;
+        $this->city = $city;
+    }
+}
+// 顧客データクラス
+class Customer
+{
+    // 顧客の氏名を表す、文字列型の普通の変数(cloneされる)
+    public $name;
+
+    // 住所を表す、Addressクラス型の変数(cloneされない)
+    public $address;
+
+    // コンストラクタ
+    public function __construct(string $name, Address $address)
+    {
+        $this->name = $name;
+        $this->address = $address;
+    }
+
+    // 氏名を変更する
+    public function changeName(string $name): void
+    {
+        $this->name = $name;
+    }
+
+    // 住所を変更する
+    public function changeAddress(string $prefecture, string $city): void
+    {
+        $this->address->prefecture = $prefecture;
+        $this->address->city = $city;
+    }
+    // cloneキーワードが使われた時に自動的にコールされるマジックメソッド
+    public function __clone()
+    {
+        $this->address = clone $this->address;
+    }
+}
+    $customer1 = new Customer('山崎太郎', new Address('東京都', '品川区'));
+    $customer2 = clone $customer1;
+    $customer2->changeName('伊藤花子');
+    $customer2->changeAddress('神奈川県', '横浜市');
+    print_r($customer1); // 東京都のはずが、神奈川県になってしまう
+    print_r($customer2);
+```
