@@ -1,4 +1,4 @@
-
+## PHP基本操作
 #### phpinfoパラメータ確認
 ```
 php -r 'phpinfo();'
@@ -12,6 +12,7 @@ php -r 'phpinfo();' | grep memory_limit
 | CR+LF    | \r\n  |Windows系OS|
 | CR       | \r    |古いMac OS（9以前|
 
+## 文字列型の操作
 #### 文字コード変換
 ```
 echo '●変更前の文字コード：', mb_internal_encoding(), PHP_EOL;
@@ -20,7 +21,7 @@ mb_internal_encoding('SJIS-Win');
 echo '●変更後の文字コード：', mb_internal_encoding(), PHP_EOL;
 ```
 
-#### 文字検索
+#### 検索
 ```
 $sentence = '今日は、良い日です';
 var_dump(mb_strpos($sentence, '日'));       // 結果：1
@@ -35,7 +36,7 @@ if (mb_strpos($sentence, '日')) {
 }
 ```
 
-#### 文字を切り取る
+#### 切り取り
 ```
 $sentence = '今日は,良い日です';
 var_dump(mb_substr($sentence, 4, 3));       // 結果：良い日
@@ -48,7 +49,7 @@ var_dump(mb_strstr($sentence, '日', true));     // 結果：今
 ```
 
 
-#### 文字の置換
+#### 置換
 ```
 $sentence = '今日は、良い日です';
 var_dump(str_replace('今日', 'あした', $sentence)); // 結果：あしたは、良い日です
@@ -59,7 +60,7 @@ $sentences = <<< TEXT
 TEXT;
 var_dump(str_replace(["\r\n", "\r", "\n"], '', $sentences)); // 改行が除去された$sentencesを出力
 ```
-#### 文字の分割
+#### 分割
 ```
 $today = '2019-03-16';
 
@@ -73,7 +74,7 @@ echo '年：', $year,     PHP_EOL;
 echo '月：', $month,    PHP_EOL;
 echo '日：', $day,      PHP_EOL;
 ```
-#### 文字のパディング（穴追加/穴埋め）
+#### パディング（穴追加/穴埋め）
 ```
 // 連番を元に7桁のコード値を生成する例
 $sequence = 1234;
@@ -135,7 +136,7 @@ var_dump(trim($greeting));
 $greeting = " こんにちは\t\r\n";
 var_dump(trim($greeting));
 ```
-#### 文字エンコード・デコード
+#### 文字のエンコード・デコード
 ```
 $string = 'こんにちは';
 
@@ -209,7 +210,7 @@ $newUrl = $urlElements['scheme'] . '://' . $urlElements['host'] . $urlElements['
 print_r(urldecode($newUrl));
 ```
 ## 正規表現
-#### パターン修飾子
+#### パターン修飾子について
 - u  
 正規表現と対象文字列をUTF-8として処理する
 - i  
@@ -313,7 +314,7 @@ foreach ($books as $book) {
     }
 }
 ```
-## 数値
+## 数値型の操作
 #### 最小値/最大値を取得
 ```
 $numbers = [80, 24, 100, 34, 62];
@@ -388,7 +389,7 @@ $binary = 'E7AEB1E6A0B9';
 echo '●E7AEB1E6A0B9の16進数表現をデコードします。', PHP_EOL;
 echo hex2bin($binary), PHP_EOL;
 ```
-## 日付・時間（DateTimeクラス）
+## 日付・時間（DateTimeクラス）の操作
 #### 日時操作
 ```
 // タイムゾーンをAsia/Tokyoにする。
@@ -518,39 +519,835 @@ var_dump(strtotime($date1) > strtotime($date2));
 echo '●date1はdate2よりも過去か？：', PHP_EOL;
 var_dump(strtotime($date1) < strtotime($date2));
 ```
-#### 
+## 配列型の操作
+#### 要素の操作（追加/結合/切り取り/削除）
+```
+$chars = ['a', 'b', 'c'];
+
+echo '●配列に要素を追加する', PHP_EOL;
+$chars[] = 'd'; // この書式だと1つずつしか要素を追加できない
+array_push($chars, 'e', 'f', 'g');  // array_pushを使うと1回で複数要素を追加できる
+print_r($chars);                    // 結果：a,b,c,d,e,f,g
+
+echo '●配列の最初に要素を追加する', PHP_EOL;
+array_unshift($chars, 'Z', 'Y', 'X');
+print_r($chars);                    // 結果：Z,Y,X,a,b,c,d,e,f,g
+
+echo '●2つの配列を結合する', PHP_EOL;
+$chars = array_merge($chars, ['h', 'i', 'j']);
+print_r($chars);                    // 結果：Z,Y,X,a,b,c,d,e,f,g,h,i,j
+
+echo '●配列の先頭の要素を取り出す。', PHP_EOL;
+$headElement = array_shift($chars);
+echo $headElement, PHP_EOL;         // 結果：Z
+print_r($chars);                    // 結果：Y,X,a,b,c,d,e,f,g,h,i,j
+
+echo '●配列の末尾の要素を取り出す。', PHP_EOL;
+$lastElement = array_pop($chars);
+echo $lastElement, PHP_EOL;         // 結果：j
+print_r($chars);                    // 結果：Y,X,a,b,c,d,e,f,g,h,i
+
+echo '●配列のキー番号2から5要素分、切り出す', PHP_EOL;
+$sliced = array_slice($chars, 2, 5);
+print_r($sliced);                   // 結果：a,b,c,d,e
+print_r($chars);                    // 結果：Y,X,a,b,c,d,e,f,g,h,i
+
+echo '●配列のキー番号2の要素を削除する(キーは詰まりません)', PHP_EOL;
+unset($chars[2]);
+print_r($chars);                    // 結果：Y,X,b,c,d,e,f,g,h,i
+```
+#### キーのみ、値のみを取得
+```
+$user = [
+    'name'          => 'Tanaka',
+    'age'           => 20,
+    'prefecture'    => 'Osaka',
+    'hobbies'       => ['魚釣り', '読書', '作詞']
+];
+
+echo '●連想配列のキーのみを取得。', PHP_EOL;
+$keys = array_keys($user);
+print_r($keys);
+
+echo '●連想配列のキーのうち、値として「Osaka」を持つもののみを取得。', PHP_EOL;
+$keys = array_keys($user, 'Osaka', true);
+print_r($keys);
+
+echo '●連想配列のキーのうち、値として文字列データ型の「20」を持つもののみを取得。', PHP_EOL;
+$keys = array_keys($user, '20', true);
+print_r($keys);
+
+echo '●連想配列の値のみを取得。', PHP_EOL;
+$values = array_values($user);
+print_r($values);
+```
+#### 全要素に処理を適用する
+```
+// 有効期限リスト
+$expireDates = ['2020-01-03', '2021-12-11', '2019-08-10'];
+
+$newExpireDates = array_map(
+    // 有効期限を3年間延長する関数(引数$callback)
+    function($date) {
+        return (new DateTime($date))->modify('+ 3years')->format('Y-m-d');
+    },
+    $expireDates
+);
+
+echo '●expireDatesの要素(内容はもとのまま)', PHP_EOL;
+print_r($expireDates);
+
+echo '●newExpireDatesの要素(内容が書き換わっています)', PHP_EOL;
+print_r($newExpireDates);
+```
+#### 特定のキーだけを取得する
+```
+$userList = [
+    [
+        'user_id'       => 100001,
+        'user_name'     => 'Tanaka',
+        'age'           => 20,
+        'prefecture'    => 'Osaka'
+    ],
+    [
+        'user_id'       => 100002,
+        'user_name'     => 'Suzuki',
+        'age'           => 38,
+        'prefecture'    => 'Ehime'
+    ],
+    [
+        'user_id'       => 100003,
+        'user_name'     => 'Tsukamoto',
+        'age'           => 28,
+        'prefecture'    => 'Aichi'
+    ]
+];
+
+echo '●prefectureキーのみを取得。', PHP_EOL;
+$prefectures = array_column($userList, 'prefecture');
+print_r($prefectures);
+
+echo '●prefectureキーのみを取得し、戻り値のキーはuser_id値とする。', PHP_EOL;
+$prefectures = array_column($userList, 'prefecture', 'user_id');
+print_r($prefectures);
+
+echo '●すべてのキーを取得し、戻り値のキーはuser_id値とする。', PHP_EOL;
+$prefectures = array_column($userList, null, 'user_id');
+print_r($prefectures);
+```
+#### 区切り文字を追加し、文字列化（一行にまとめる）
+```
+$hobbies = ['テニス', '散歩', 'バッティング練習'];
+$hobbiesAsString = implode('・', $hobbies);
+echo '趣味：', $hobbiesAsString, PHP_EOL;
+```
+#### 並び替え（sort）
+```
+$prices = [200, 3100, '150', 2500, 90];
+
+echo '●配列値で昇順ソートする。', PHP_EOL;
+sort($prices);
+print_r($prices);
+
+echo '●配列値で降順ソートする。', PHP_EOL;
+rsort($prices);
+print_r($prices);
+
+echo '●配列値を文字列として昇順ソートする。', PHP_EOL;
+sort($prices, SORT_STRING);
+print_r($prices);
+
+$files = ['image1.png', 'image105.png', 'image2.png', 'image3.png', 'image44.png'];
+echo '●配列値で自然順ソートする。', PHP_EOL;
+sort($files, SORT_NATURAL);
+print_r($files);
+
+$items = [
+    100001      =>      '掃除機',
+    109913      =>      'エアコン',
+    100409      =>      'PC',
+    100004      =>      'テレビ'
+];
+
+echo '●連想配列キーの昇順でソートする。', PHP_EOL;
+ksort($items);
+print_r($items);
+
+echo '●連想配列キーの降順でソートする。', PHP_EOL;
+krsort($items);
+print_r($items);
+```
+#### 独自のルールで並び替える(usort)
+```
+$users = [
+    [
+        'name'          => 'Hanako SUZUKI', // 氏名
+        'num-of-posts'  => 15               // 投稿数
+    ],
+    [
+        'name'          => 'Ichiro YANAGI',
+        'num-of-posts'  => 92
+    ],
+    [
+        'name'          => 'Akira HANAYAMA',
+        'num-of-posts'  => 15
+    ],
+    [
+        'name'          => 'Ayami YOSHIKAWA',
+        'num-of-posts'  => 8
+    ]
+];
+usort($users, function($a, $b) {
+    if ($a['num-of-posts'] === $b['num-of-posts']) {
+        return $a['name'] <=> $b['name'];
+    }
+    return ($a['num-of-posts'] <=> $b['num-of-posts']) * -1;
+});
+print_r($users);
+```
+#### 要素数を調べる
+```
+$chars = ['a', 'b', 'c'];
+echo count($chars), PHP_EOL;    // 結果：3
+
+$chars = [
+    'a' => 'あ',
+    'i' => 'い',
+    'u' => 'う'
+];
+echo count($chars), PHP_EOL;    // 結果：3
+
+$user = [
+    'name'          => 'Tanaka',
+    'age'           => 20,
+    'prefecture'    => 'Osaka',
+    'hobbies'       => ['魚釣り', '読書', '作詞']
+];
+echo count($user), PHP_EOL;    // 結果：4
+echo count($user, COUNT_RECURSIVE), PHP_EOL;    // 結果：7
+```
+#### 範囲指定で配列作成
+```
+$list = range(1, 15);           // 結果：1～15の配列
+print_r($list);
+
+$list = range(0, 100, 10);      // 結果：0,10,20,30...100の配列
+print_r($list);
+
+$list = range('a', 'e');        // 結果：a～eの配列
+print_r($list);
+
+$list = range('A', 'E');        // 結果：A～Eの配列
+print_r($list);
+```
+## ファイル/ディレクトリ操作
+#### 基本操作（ファイル名/ディレクトリ名/拡張子）
+```
+echo '●相対パスでファイルを指定した場合', PHP_EOL;
+$filePath = './files/dir1/dir2/file.txt';
+echo 'ファイル名：', basename($filePath), PHP_EOL;
+echo 'ファイル名(拡張子なし)：', basename($filePath, '.txt'), PHP_EOL;
+echo 'ディレクトリ名：', dirname($filePath), PHP_EOL;
+echo 'ディレクトリ名(2階層上)：', dirname($filePath, 2), PHP_EOL;
+echo '絶対パス：', realpath($filePath), PHP_EOL;
+echo '拡張子：', pathinfo($filePath, PATHINFO_EXTENSION), PHP_EOL;
+echo 'ファイル名：', pathinfo($filePath, PATHINFO_FILENAME), PHP_EOL;
+
+echo '●絶対パスでファイルを指定した場合', PHP_EOL;
+$filePath = '/Users/kentooguri/localSystems/php/honkaku/chapter04/file1/files/dir1/dir2/file.txt';
+echo 'ファイル名：', basename($filePath), PHP_EOL;
+echo 'ディレクトリ名：', dirname($filePath), PHP_EOL;
+echo '絶対パス：', realpath($filePath), PHP_EOL;
+echo '拡張子：', pathinfo($filePath, PATHINFO_EXTENSION), PHP_EOL;
+```
+#### 存在チェック
+```
+// 存在するファイルに対するfile_exists
+var_dump(file_exists('files/note.txt'));        // 結果：true
+
+// 存在しないファイルに対するfile_exists
+var_dump(file_exists('files/ghost.txt'));       // 結果：false
+
+// 存在するディレクトリに対するfile_exists
+var_dump(file_exists('files/dir1'));            // 結果：true
+
+// 存在しないディレクトリに対するfile_exists
+var_dump(file_exists('files/ghost-dir'));       // 結果：false
+```
+#### コピー/リネーム/削除
+```
+echo '●flower.pngをコピーしてflower-copy1.pngを作ります。', PHP_EOL;
+copy('./files/flower.png', './files/flower-copy1.png');
+
+echo '●flower.pngをコピーしてflower-copy2.pngを作ります。', PHP_EOL;
+copy('./files/flower.png', './files/flower-copy2.png');
+
+echo '●flower.pngをコピーしてflower-copy3.pngを作ります。', PHP_EOL;
+copy('./files/flower.png', './files/flower-copy3.png');
+
+echo '●flower-copy1.pngをflower-rename1.pngにリネームします。', PHP_EOL;
+rename('./files/flower-copy1.png', './files/flower-rename1.png');
+
+echo '●flower-copy2.pngを削除します。', PHP_EOL;
+unlink('./files/flower-copy2.png');
+```
+#### ファイルの読み込み
+```
+echo '●file関数でファイルを読み込みます。', PHP_EOL;
+$lines = file('files/note.txt'); //テキストデータの読み込み可能
+foreach ($lines as $line) {
+    echo trim($line), PHP_EOL;
+}
+
+echo '●file_get_contents関数でファイルを読み込みます。', PHP_EOL;
+$contents = file_get_contents('files/note.txt'); //テキスト&バイナリデータを読み込み可能
+echo $contents, PHP_EOL;
+
+echo '●readfile関数でファイルを読み込みます。', PHP_EOL;
+readfile('files/note.txt'); //テキスト&バイナリデータを読み込み可能
+```
+#### ファイルの書き込み
+```
+file_put_contents("test.log","### START oguri " . date("Y/m/d H:i:s ") . __FILE__ . "(line ".__LINE__.")↓↓↓\n",FILE_APPEND);
+file_put_contents("test.log", print_r($result, true) ."\n",FILE_APPEND);
+file_put_contents("test.log","### E N D oguri " . date("Y/m/d H:i:s ") . __FILE__ . "(line ".__LINE__.")↑↑↑\n",FILE_APPEND);
+
+    $log = <<< LOG
+■2019-01-01 12:34:56 [ERROR] 画像ファイルが見つかりません。
+■2019-01-02 12:34:56 [INFO] ユーザがログインしました。
+
+LOG;
+    file_put_contents('files/log.txt', $log);
+
+    $log = <<< LOG
+■2019-01-03 12:34:56 [INFO] フリーワード検索されました。
+■2019-01-04 12:34:56 [INFO] PDFファイルがアップロードされました。
+
+LOG;
+    file_put_contents('files/log.txt', $log, FILE_APPEND);
+
+    echo '●log.txtの内容は以下の通りです。', PHP_EOL;
+    readfile('files/log.txt');
+```
+#### ファイル情報取得（作成日時/最終更新日時/最終アクセス日時）
+```
+define('LOCK_FILE', 'files/lock');
+
+if (file_exists(LOCK_FILE)) {
+    unlink(LOCK_FILE);
+}
+
+echo '●現在日時：', date('Y-m-d H:i:s'),  PHP_EOL;
+
+echo '●ファイル「lock」を作成します。', PHP_EOL;
+touch(LOCK_FILE);
+
+echo '●ファイル「lock」の更新日時を3時間後に、アクセス日時を5時間後に変更します。', PHP_EOL;
+touch(LOCK_FILE, time() + 60 * 60 * 3, time() + 60 * 60 * 5);
+
+echo '作成日時：', date('Y-m-d H:i:s', filectime(LOCK_FILE)), PHP_EOL;
+echo '最終更新日時：', date('Y-m-d H:i:s', filemtime(LOCK_FILE)), PHP_EOL;
+echo '最終アクセス日時：', date('Y-m-d H:i:s', fileatime(LOCK_FILE)), PHP_EOL;
+```
+#### MIMEタイプ取得
+```
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+
+// PNG画像ファイルのMIMEタイプを取得する
+echo finfo_file($finfo, 'files/flower.png'), PHP_EOL;   // 結果：image/png
+
+// 本当はテキスト形式なのに、拡張子がpdfに偽装されているファイルのMIMEタイプを取得する
+echo finfo_file($finfo, 'files/dummy.pdf'), PHP_EOL;    // 結果：text/plain
+
+finfo_close($finfo);
+```
+#### ディレクトリを生成
+```
+echo '●new-dir1ディレクトリを作成します。', PHP_EOL;
+mkdir('files/new-dir1');
+
+echo '●new-dir2ディレクトリを作成します。', PHP_EOL;
+mkdir('files/new-dir2');
+
+echo '●new-dir1ディレクトリを削除します。', PHP_EOL;
+rmdir('files/new-dir1');
+```
+#### パターンで検索
+```
+$files = glob('files/user-images/user1234-*.{jpg,jpeg,gif,png}', GLOB_BRACE);
+print_r($files);
+```
+#### ファイルの読み込み
+```
+echo '●file関数でファイルを読み込みます。', PHP_EOL; //テキストデータの読み込み可能
+$lines = file('files/note.txt');
+foreach ($lines as $line) {
+    echo trim($line), PHP_EOL;
+}
+
+echo '●file_get_contents関数でファイルを読み込みます。', PHP_EOL; //テキスト&バイナリデータを読み込み可能
+$contents = file_get_contents('files/note.txt');
+echo $contents, PHP_EOL;
+
+echo '●readfile関数でファイルを読み込みます。', PHP_EOL; //テキスト&バイナリデータを読み込み可能
+readfile('files/note.txt');
+```
+## ファイル操作用のクラス（SplFileObject/DirectoryIterator）
+#### ファイル読み込み（一行ずつ）
+```
+// sample.txtを読み込みます
+$file = new SplFileObject('files/sample.txt');
+$file->setFlags(SplFileObject::READ_AHEAD | SplFileObject::SKIP_EMPTY | SplFileObject::DROP_NEW_LINE);
+
+// sample.txtを1行ずつループ処理します。
+$lineNumber = 0;
+foreach ($file as $line) {
+    $lineNumber++;
+    echo "{$lineNumber}行目：『{$line}』", PHP_EOL;
+}
+$file = null;
+
+
+
+#クラス未使用の場合（内部関数を使う場合）
+$handle = fopen('files/sample.txt', 'r');
+while ($line = fgets($handle)) {
+    $line = trim($line);
+    if ($line === '') {
+        continue;
+    }
+    echo $line, PHP_EOL;
+}
+fclose($handle);
+```
+#### CSVを読み込む
+```
+setlocale(LC_ALL, 'ja_JP.UTF-8');
+
+require_once dirname(__FILE__) . '/functions.php';
+
+// sample.csvの文字コードをUTF-8に変換し、sample-utf.csvとして保存します。
+sjis2utf('files/sample.csv', 'files/temp/sample-utf.csv');
+
+// sample-utf.csvを読み込みます。
+$csv = new SplFileObject('files/temp/sample-utf.csv');
+$csv->setFlags(SplFileObject::READ_CSV);
+
+// sample-utf.csvを1行ずつループ処理します。
+// fieldsPerLineはCSVをフィールド単位に区切った配列です。
+foreach ($csv as $fieldsPerLine) {
+    print_r($fieldsPerLine);
+}
+$csv = null;
 ```
 ```
-#### 
+#functions.php
+
+/**
+ * ファイルの文字コードを変換し、別ファイルとして保存する関数。
+ * @param string $fromFile 変換元ファイルパス。存在するファイルを指定すること。
+ * @param string $toFile 変換先ファイルパス。既に存在する場合は上書き保存される事に注意。
+ * @param string $fromEncoding 変換元文字コード
+ * @param string $toEncoding 変換先文字コード
+ */
+function convertEncoding(string $fromFile, string $toFile, string $fromEncoding, string $toEncoding): void
+{
+    file_put_contents(
+        $toFile,
+        mb_convert_encoding(
+            file_get_contents($fromFile),
+            $toEncoding,
+            $fromEncoding
+        )
+    );
+}
+
+/**
+ * ファイルの文字コードをUTF-8からSJIS-winに変換し、別ファイルとして保存する関数。
+ * @param string $fromFile 変換元ファイルパス。存在するファイルを指定すること。
+ * @param string $toFile 変換先ファイルパス。既に存在する場合は上書き保存される事に注意。
+ */
+function utf2sjis(string $fromFile, string $toFile): void
+{
+    convertEncoding($fromFile, $toFile, 'UTF-8', 'SJIS-win');
+}
+
+/**
+ * ファイルの文字コードをSJIS-winからUTF-8に変換し、別ファイルとして保存する関数。
+ * @param string $fromFile 変換元ファイルパス。存在するファイルを指定すること。
+ * @param string $toFile 変換先ファイルパス。既に存在する場合は上書き保存される事に注意。
+ */
+function sjis2utf(string $fromFile, string $toFile): void
+{
+    convertEncoding($fromFile, $toFile, 'SJIS-win', 'UTF-8');
+}
+
+```
+#### ファイルに書き込み（ファイル/CSV）
+```
+// テキストファイルへの書き込み
+$file = new SplFileObject('files/generated.txt', 'w');
+$text = <<< TEXT
+いろはにほへと　ちりぬるを
+わかよたれそ　つねならむ
+うゐのおくやま　けふこえて
+あさきゆめみし　ゑひもせす
+TEXT;
+$bytes = $file->fwrite($text);
+echo '●generated.txtに', $bytes, 'バイトを書き込みました。', PHP_EOL;
+
+
+// CSVファイルへの書き込み
+$csv = new SplFileObject('files/temp/generated-utf.csv', 'w');
+$items = [
+    ['商品名', '価格'],
+    ['掃除機', '15,000'],
+    ['エアコン', '60,000'],
+    ['アイロン高性能', '20,000'],
+    ["1行目\n\"2行目\"\n3行目", '30,000'],
+];
+foreach ($items as $item) {
+    $csv->fputcsv($item);
+}
+// generated-utf.csvの文字コードをShift-JISに変換し、generated.csvとして保存します。
+utf2sjis('files/temp/generated-utf.csv', 'files/generated.csv');
+echo '●generated.csvに書き込みました。', PHP_EOL;
+$csv = null;
+```
+#### ディレクト内を調べる
+```
+$dir = new DirectoryIterator('./files');
+
+foreach ($dir as $file) {
+    if ($file->isDot()) {
+        continue;
+    }
+
+    $type = '';
+    if ($file->isFile()) {
+        $type = 'ファイル';
+    } elseif ($file->isDir()) {
+        $type = 'ディレクトリ';
+    }
+    if ($file->isLink()) {
+        $type .= '(シンボリックリンク)';
+    }
+    echo $type, ':', $file->getFileName(), PHP_EOL;
+}
+$dir = null;
+
+// ファイル:flower.png
+// ファイル:generated.csv
+// ファイル:generated.txt
+// ファイル:sample.csv
+// ファイル:sample.txt
+// ディレクトリ:temp
+```
+## 妥当性のチェック
+#### データ型
+```
+// 論理型のチェック
+var_dump(is_bool('true'));          // 結果：false
+var_dump(is_bool(true));            // 結果：true
+var_dump(is_bool(false));           // 結果：true
+
+// 数値型のチェック
+var_dump(is_int(123));              // 結果：true
+var_dump(is_int('123'));            // 結果：false
+var_dump(is_int(123.456));          // 結果：false
+
+// 数値または数字であるかのチェック
+var_dump(is_numeric(123));          // 結果：true
+var_dump(is_numeric('123'));        // 結果：true
+var_dump(is_numeric('123.456'));    // 結果：true
+var_dump(is_numeric('string'));     // 結果：false
+
+// オブジェクト型のチェック
+var_dump(is_object('object'));      // 結果：false
+var_dump(is_object(new stdClass()));// 結果：true
+
+// nullチェック
+var_dump(is_null(null));            // 結果：true
+var_dump(is_null(''));              // 結果：false
+var_dump(is_null(0));               // 結果：false
+```
+#### 日付
+```
+var_dump(checkdate(12, 31, 2018));  // 結果：true
+var_dump(checkdate(8, 99, 2018));   // 結果：false
+var_dump(checkdate(2, 29, 2020));   // 結果：true
+var_dump(checkdate(2, 29, 2019));   // 結果：false
+```
+#### 空(カラ)
+```
+var_dump(empty(0));     // 結果：true
+var_dump(empty('0'));   // 結果：true
+var_dump(empty('a'));   // 結果：false
+var_dump(empty(0.1));   // 結果：false
+var_dump(empty(0.0));   // 結果：true
+var_dump(empty(''));    // 結果：true
+var_dump(empty(null));  // 結果：true
+var_dump(empty([]));    // 結果：true
+var_dump(empty(true));  // 結果：false
+var_dump(empty(false)); // 結果：true
+```
+#### 存在チェック（変数/配列キー/連想配列キー）
+```
+// スカラー変数に対するチェック
+$a = 'a';
+var_dump(isset($a));            // 結果：true
+var_dump(isset($b));            // 結果：false
+
+$z = null;
+var_dump(isset($z));            // 結果：false
+
+// 配列のキーに対するチェック
+$chars = ['a', 'i', 'u'];
+var_dump(isset($chars));      // 結果：true
+var_dump(isset($chars[0]));   // 結果：true
+var_dump(isset($chars[1]));   // 結果：true
+var_dump(isset($chars[2]));   // 結果：true
+var_dump(isset($chars[3]));   // 結果：false
+var_dump(array_key_exists(0, $chars));   // 結果：true
+var_dump(array_key_exists(3, $chars));   // 結果：false
+
+// 連想配列のキーに対するチェック
+$chars = [
+    'a' => 'あ',
+    'i' => 'い',
+    'u' => 'う',
+    'e' => null,
+    'o' => 'お'
+];
+var_dump(isset($chars['a']));   // 結果：true
+var_dump(isset($chars['e']));   // 結果：false
+var_dump(isset($chars[0]));     // 結果：false
+var_dump(array_key_exists('a', $chars));   // 結果：true
+var_dump(array_key_exists('e', $chars));   // 結果：true(値がnullでもtrue)
+```
+#### 存在チェック（配列の値/連想配列の値）
+```
+$chars = ['a', 'i', 'u', 'e', 'o'];
+var_dump(in_array('u', $chars, true));      // 結果：true
+var_dump(in_array('U', $chars, true));      // 結果：false(大文字小文字は区別)
+var_dump(in_array('n', $chars, true));      // 結果：false
+var_dump(in_array(0, $chars, true));        // 結果：false
+
+$chars = [
+    'a' => 'あ',
+    'i' => 'い',
+    'u' => 'う',
+    'e' => 'え',
+    'o' => 'お'
+];
+var_dump(in_array('a', $chars, true));      // 結果：false(キーは見ない)
+var_dump(in_array('n', $chars, true));      // 結果：false(キーは見ない)
+var_dump(in_array('あ', $chars, true));     // 結果：true
+var_dump(in_array('ん', $chars, true));     // 結果：false
+```
+
+#### インスタンスの型チェック
+```
+abstract class AbstractFile {}
+
+interface Drawable {}
+
+class Image extends AbstractFile implements Drawable {}
+
+class Pdf extends AbstractFile {}
+
+class Nothing {}
+
+$pdf = new Pdf();
+var_dump($pdf instanceof Pdf);                  // 結果：true
+var_dump($pdf instanceof Image);                // 結果：false
+var_dump($pdf instanceof AbstractFile);         // 結果：true
+var_dump($pdf instanceof Drawable);             // 結果：false
+
+$image = new Image();
+var_dump($image instanceof Pdf);                // 結果：false
+var_dump($image instanceof Image);              // 結果：true
+var_dump($image instanceof AbstractFile);       // 結果：true
+var_dump($image instanceof Drawable);           // 結果：true
+
+$nothing = new Nothing();
+var_dump($nothing instanceof Pdf);              // 結果：false
+var_dump($nothing instanceof Image);            // 結果：false
+var_dump($nothing instanceof AbstractFile);     // 結果：false
+var_dump($nothing instanceof Drawable);         // 結果：false
+var_dump($nothing instanceof GhostClass);       // 結果：false
+```
+#### 存在チェック（クラス/関数/メソッド）
+```
+class SomeClass
+{
+    public static function doStatic() {}
+
+    public function doPublic() {}
+
+    private function doPrivate() {}
+}
+
+$someClass = new SomeClass();
+
+var_dump(class_exists('SomeClass', false));             // 結果：true
+var_dump(class_exists('GhostClass', false));            // 結果：false
+
+require_once dirname(__FILE__) . '/classes/ExternalClass1.php';
+var_dump(class_exists('ExternalClass1', false));            // 結果：true
+var_dump(class_exists('ExternalClass2', false));            // 結果：false(require_onceしていないためfalse)
+
+var_dump(method_exists($someClass, 'doPublic'));        // 結果：true
+var_dump(method_exists($someClass, 'doPrivate'));       // 結果：true
+var_dump(method_exists('SomeClass', 'doPublic'));       // 結果：true
+var_dump(method_exists('SomeClass', 'doStatic'));       // 結果：true
+var_dump(method_exists($someClass, 'doNothing'));       // 結果：false
+
+var_dump(is_callable([$someClass, 'doPublic']));        // 結果：true
+var_dump(is_callable([$someClass, 'doPrivate']));       // 結果：false(privateメソッドは呼べない)
+var_dump(is_callable([$someClass, 'doStatic']));        // 結果：true
+var_dump(is_callable([$someClass, 'doPrivate'], true)); // 結果：true
+
+function calc() {}
+var_dump(is_callable('calc'));                          // 結果：true
+var_dump(function_exists('calc'));                      // 結果：true
+var_dump(function_exists('nothing'));                   // 結果：false
+```
+## 乱数
+#### ランダムな数値
+```
+// 単純にランダムな数値を生成する例
+echo 'ランダムな番号：', random_int(1, 99999), PHP_EOL;
+
+// ランダムな顧客コードを生成する例
+$code = 'customer-' . str_pad(strval(random_int(1, 99999)), 5, '0', STR_PAD_LEFT);
+echo '顧客コードは：', $code, PHP_EOL;
+
+// ランダムな配列要素を選択する例
+$colors = ['red', 'blue', 'green', 'yellow', 'black'];
+echo 'ラッキーカラーは：', $colors[random_int(0,4)], PHP_EOL;
+
+// ランダムなURLを生成する例
+function generateRandom(int $minLength, int $maxLength)
+{
+    $length = random_int($minLength, $maxLength);
+    $chars = array_merge(range('a', 'z'), range('A', 'Z'), range('0', '9'));
+    print_r($chars);
+    $random = '';
+    for ($i = 0; $i < $length; $i++) {
+        print_r(count($chars));
+        $random .= $chars[random_int(0, count($chars) - 1)];
+    }
+    return $random;
+}
+echo 'このURLをクリックして、ユーザ登録を完了してください：http://example.com/user?key=', generateRandom(16, 32), PHP_EOL;
+```
+#### ランダムなバイト数
+```
+// 5バイトのランダム値を生成する。
+// 各バイトは0x00～0xffの範囲となる。
+$bytes = random_bytes(5);
+echo bin2hex($bytes), PHP_EOL;   // 結果例：03648d5fcb(10文字になる)
+
+$bytes = openssl_random_pseudo_bytes(5);
+echo bin2hex($bytes), PHP_EOL;   // 結果例：d08dafbdd3(10文字になる)
+```
+####
 ```
 ```
-#### 
+####
 ```
 ```
-#### 
+####
 ```
 ```
-#### 
+####
 ```
 ```
-#### 
+####
 ```
 ```
-#### 
+####
 ```
 ```
-#### 
+####
 ```
 ```
-#### 
+####
 ```
 ```
-#### 
+####
 ```
 ```
-#### 
+####
 ```
 ```
-#### 
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
+```
+```
+####
 ```
 ```

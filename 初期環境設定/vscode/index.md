@@ -2,12 +2,13 @@
 - Japanese Language Pack for Visual Studio Code
 - Material Icon Theme
 - Auto Rename Tag
-- PHP IntelliSense
+- PHP Intelephense
 - Draw.io Integration
 - Edit csv
 - Bracket Pair Colorizer
 - Code Spell Checker
 - Trailing Spaces
+- PHP Debug
 
 #### 環境整備
 - Japanese Language Pack for Visual Studio Code  
@@ -18,12 +19,14 @@ VsCodeを日本語化
 #### 便利機能
 - Auto Rename Tag  
 開始タグを変更すると閉じタグも自動で変更される。
-- PHP IntelliSense  
+- PHP Intelephense  
 関数ジャンプ
 - Draw.io Integration  
 図作成ツール。機能が関連する画面遷移図作成に使用。
 - Edit csv  
 CSVファイルをセル形式に変換する。
+- PHP Debug  
+変数の中身を表示、ステップ実行
 
 #### タイポ防止
 - Bracket Pair Colorizer  
