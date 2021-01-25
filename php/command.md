@@ -1252,20 +1252,288 @@ echo bin2hex($bytes), PHP_EOL;   // 結果例：03648d5fcb(10文字になる)
 $bytes = openssl_random_pseudo_bytes(5);
 echo bin2hex($bytes), PHP_EOL;   // 結果例：d08dafbdd3(10文字になる)
 ```
-####
+## ハッシュ化と暗号化
+#### パスワードをハッシュ化
+```
+$hashedPassword = password_hash('abcde1234(^^)v', PASSWORD_DEFAULT, ['cost' => 13]);
+echo 'ハッシュ化されたパスワード：', $hashedPassword, PHP_EOL;
+
+$input = 'abcde1234(^^)v';
+if (password_verify($input, $hashedPassword)) {
+    echo 'パスワードは一致しています。', PHP_EOL;       // このブロックに入る
+} else {
+    echo 'パスワードは一致していません。', PHP_EOL;
+}
+
+$input = 'xyz9876(^^)v';
+if (password_verify($input, $hashedPassword)) {
+    echo 'パスワードは一致しています。', PHP_EOL;
+} else {
+    echo 'パスワードは一致していません。', PHP_EOL;     // このブロックに入る
+}
+```
+#### ファイルをハッシュ化
+```
+echo 'flower1.pngのmd5ハッシュ値', hash_file('md5', 'files/flower1.png'), PHP_EOL;
+echo 'flower2.pngのmd5ハッシュ値', hash_file('md5', 'files/flower2.png'), PHP_EOL;
+echo 'flower3.pngのmd5ハッシュ値', hash_file('md5', 'files/flower3.png'), PHP_EOL;
+
+echo 'flower1.pngのsha256ハッシュ値', hash_file('sha256', 'files/flower1.png'), PHP_EOL;
+echo 'flower2.pngのsha256ハッシュ値', hash_file('sha256', 'files/flower2.png'), PHP_EOL;
+echo 'flower3.pngのsha256ハッシュ値', hash_file('sha256', 'files/flower3.png'), PHP_EOL;
+```
+#### データを暗号化/復号
+```
+require_once dirname(__FILE__) . '/Crypter.php';
+
+/**
+    * cipher.keyに保存されているキーは暗号化と復号のためのパスワードの役目を果たす文字列です。
+    * キーが外部に漏れないようにしてください。
+    *
+    * このプログラムではAES-256-CBCの暗号化アルゴリズムを使いますので、
+    * キーの長さは256ビット(=32バイト)である必要があります。
+    *
+    * cipher.keyに保存されている値は、他の環境に流用しないようにしてください。
+    * 他の環境で使うときは、以下のプログラムを実行することで、cipher.keyの内容を書き換えてください。
+    *
+    *      $bytes = openssl_random_pseudo_bytes(32);
+    *      file_put_contents('cipher.key', base64_encode($bytes));
+    */
+
+// cipher.keyの内容をBASE64デコードすると、256ビット(=32バイト)のキーになります。
+$key = base64_decode(file_get_contents('cipher.key'));
+
+// 暗号化したい文字列
+$address = '東京都渋谷区渋谷99-99-99 テストマンション901号室';
+
+// 暗号化を行います。encryptメソッドの戻り値の$encryptedと$ivは、両方とも復号に必要です。
+// データベースには、$encryptedと$ivの両方を、カラムを分けて保存してください。
+$crypter = new Crypter($key);
+list($encrypted, $iv) = $crypter->encrypt($address, true);
+echo '●暗号化された文字列：', PHP_EOL;
+echo $encrypted, PHP_EOL;
+echo '●暗号化された文字列のIV：', PHP_EOL;
+echo $iv, PHP_EOL;
+
+// 復号を行います。
+$crypter = new Crypter($key);
+$decrypted = $crypter->decrypt($encrypted, $iv, true);
+echo '●復号された文字列：', PHP_EOL;
+echo $decrypted, PHP_EOL;
+
+echo '●IVの長さを取得：', PHP_EOL;
+$ivLength = openssl_cipher_iv_length('AES-256-CBC');
+echo $ivLength, PHP_EOL;
+
+echo '●使用可能な暗号化アルゴリズム：', PHP_EOL;
+print_r(openssl_get_cipher_methods(false));
 ```
 ```
-####
+## Crypter.php
+
+/**
+ * 暗号化・復号を行うクラス
+ */
+class Crypter
+{
+    /**
+     * デフォルトで使う暗号化アルゴリズム
+     */
+    private const DEFUALT_METHOD = 'AES-256-CBC';
+
+    /**
+     * 暗号化・復号のためのキー
+     */
+    private $key;
+
+    /**
+     * 暗号化アルゴリズム
+     */
+    private $method;
+
+    /**
+     * コンストラクタ
+     */
+    public function __construct(string $key, string $method = null)
+    {
+        $this->key = $key;
+        if (is_null($method)) {
+            $this->method = self::DEFUALT_METHOD;
+        } else {
+            $this->method = $method;
+        }
+    }
+
+    /**
+     * 文字列を暗号化する
+     * @param string $value 暗号化したい文字列
+     * @param bool $isBase64 戻り値をbase64エンコードして返す場合はtrueを指定
+     * @return array 0番目の要素として暗号化済の文字列、1番目の要素としてIVを持つ配列
+     */
+    public function encrypt(string $value, bool $isBase64 = true): array
+    {
+        $ivLength = openssl_cipher_iv_length($this->method);
+        $iv = openssl_random_pseudo_bytes($ivLength);
+        $encrypted = openssl_encrypt($value, $this->method, $this->key, OPENSSL_RAW_DATA, $iv);
+        if ($isBase64) {
+            return [base64_encode($encrypted), base64_encode($iv)];
+        } else {
+            return [$encrypted, $iv];
+        }
+    }
+
+    /**
+     * 文字列を復号する。
+     * @param string $value 暗号化済の文字列
+     * @param string $iv IV文字列
+     * @param bool $isBase64 引数$value、$ivがbase64エンコードされている場合はtrueを指定
+     * @return 復号された文字列
+     */
+    public function decrypt(string $value, string $iv, bool $isBase64 = true): string
+    {
+        if ($isBase64) {
+            $iv = base64_decode($iv);
+            $value = base64_decode($value);
+        }
+        $decrypted = openssl_decrypt($value, $this->method, $this->key, OPENSSL_RAW_DATA, $iv);
+        return $decrypted;
+    }
+}
 ```
+## コマンドラインからプログラム実行
+#### コマンドから実行時、引数が指定されたかを判定
 ```
-####
+// 値の有無
+// mode::任意
+// from:, to:必須
+// verbose: 不要
+
+$options = getopt('m::f:t:v', ['mode::', 'from:', 'to:', 'verbose']);
+var_dump($options);
 ```
+#### コマンドから実行時のオプションを設定
 ```
-####
-```
-```
-####
-```
+/**
+ * 契約期限から1年以上経過した顧客をデータベースから削除するバッチ処理。
+ * 本バッチ処理には、以下のコマンドライン引数を指定することができる。
+ *
+ * ●-v または --verbose
+ *   この引数指定時、開発者向けのデバッグ情報を出力しながら実行します。
+ *
+ * ●-d または --dry-run
+ *   空回り(Dry Run)させるための引数。
+ *   この引数指定時、データベース削除処理を実行せず、削除対象の顧客IDを出力するのみにとどめます。
+ *
+ * ●-c または --customer-id
+ *   一部の顧客IDのみを対象に処理するための引数。この引数が無い場合は全顧客を対象に処理します。
+ *   以下が使用例です。
+ *
+ *   --customer-id=1234                 -> 顧客IDが1234のみを対象に処理します
+ *   --customer-id=1234,2345,3456       -> 3つの顧客IDを対象に処理します
+ *   --customer-id=1001-1500            -> 顧客IDが1001～1500の500顧客のみを対象に処理します
+ */
+class ExpiredCustomersDeleteBatch
+{
+
+    /**
+     * コマンドライン引数を格納した連想配列
+     */
+    private $options;
+
+    /**
+     * 詳細出力オプションの有無
+     */
+    private $isVerbose;
+
+    /**
+     * 空回り(Dry-Run)オプションの有無
+     */
+    private $isDryRun;
+
+    /**
+     * 対象顧客IDの配列
+     */
+    private $customerIds;
+
+    /**
+     * コンストラクタ
+     */
+    public function __construct($options)
+    {
+        $this->options = $options;
+        $this->parseOptions();
+    }
+
+    /**
+     * バッチ処理を実行する。
+     */
+    public function exec()
+    {
+        echo '■顧客削除バッチ処理を実行します。', PHP_EOL;
+        echo '●詳細情報の出力：', $this->isVerbose ? 'true' : 'false', PHP_EOL;
+        echo '●空回り(Dry-Run)：', $this->isDryRun ? 'true' : 'false', PHP_EOL;
+        echo '●対象顧客ID：', print_r($this->customerIds, true), PHP_EOL;
+
+        // ここに、顧客削除処理が入ります。
+    }
+
+    /**
+     * コマンドライン引数に$keysで指定されたいずれかの引数が指定されているかを調べる。
+     * @param array $keys 調べたいコマンドライン引数名。配列で複数指定可。
+     * @return 指定した引数が存在すればtrue。しなければfalse。
+     */
+    private function isOptionExists(array $keys): bool
+    {
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $this->options)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * コマンドライン引数の-cまたは--customer-idを解析する。
+     */
+    private function parseCustomerIds(): ?array
+    {
+        $customerIds = '';
+        if (array_key_exists('c', $this->options)) {
+            $customerIds = $this->options['c'];
+        } elseif (array_key_exists('customer-id', $this->options)) {
+            $customerIds = $this->options['customer-id'];
+        }
+        if (!trim($customerIds)) {
+            return null;
+        }
+        if (preg_match('/,/u', $customerIds)) {
+            return explode(',', $customerIds);
+        }
+        if (preg_match('/\-/u', $customerIds)) {
+            list($start, $end) = explode('-', $customerIds);
+            return range($start, $end);
+        }
+        return [$customerIds];
+    }
+
+    /**
+     * コマンドライン引数を解析する。
+     */
+    private function parseOptions(): void
+    {
+        $this->isVerbose = $this->isOptionExists(['v', 'verbose']);
+        $this->isDryRun = $this->isOptionExists(['d', 'dry-run']);
+        $this->customerIds = $this->parseCustomerIds();
+    }
+}
+
+
+// メインルーチン
+$options = getopt('vc:d', ['verbose', 'customer-id:', 'dry-run']);
+var_dump($options);
+$batch = new ExpiredCustomersDeleteBatch($options);
+$batch->exec();
+
 ```
 ####
 ```
