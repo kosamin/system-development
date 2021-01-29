@@ -1535,35 +1535,377 @@ $batch = new ExpiredCustomersDeleteBatch($options);
 $batch->exec();
 
 ```
-####
+#### メール送信
+初期設定
+- sendmail_pathを設定
+- stmpサーバ接続先情報を設定
+
 ```
+
+    mb_language('Japanese');
+    mb_internal_encoding('UTF-8');
+
+    /**
+     * mb_send_mailの第4引数にセットする日本語のエンコード
+     */
+    function encodeHeader($value)
+    {
+        return mb_encode_mimeheader
+            (
+                mb_convert_encoding($value, 'ISO-2022-JP', 'UTF-8'),
+                'ISO-2022-JP',
+                'B'
+            );
+    }
+
+    /**
+     * 送信元のメールアドレス。ご自身のものに書き換えてください。
+     */
+    $from = '[FROM-ADDRESS-HERE]';
+
+    /**
+     * 送信先のメールアドレス。送信して問題の無いアドレスに書き換えてください。
+     */
+    $to = '[TO-ADDRESS-HERE]';
+
+    /**
+     * メールの表題
+     */
+    $subject = 'テストメール';
+
+    /**
+     * メールの本文
+     */
+    $body = <<< BODY
+このメールはPHPからテスト送信したものです。(1行目)
+このメールはPHPからテスト送信したものです。(2行目)
+このメールはPHPからテスト送信したものです。(3行目)
+BODY;
+
+    /**
+     * メールの送信元(日本語表記)
+     */
+    $sender = encodeHeader('システム管理者');
+
+    // メールのヘッダ行を生成する。
+    $header = <<< HEADER
+From: {$sender} <{$from}>
+Reply-To: {$from}
+HEADER;
+
+    // メール送信する。
+    $isMailSent = mb_send_mail($to, $subject, $body, $header);
+
+    echo $isMailSent ? 'メールを送信しました。' : 'メールは送信できませんでした。';
+    echo PHP_EOL;
+
 ```
-####
+#### バックトレース情報を取得
 ```
+class SomeClass
+{
+    public function doSomething1()
+    {
+        $this->doSomething2('Hello');
+    }
+
+    public function doSomething2(string $arg)
+    {
+        $this->doSomething3($arg);
+    }
+
+    public function doSomething3(string $arg)
+    {
+        print_r(debug_backtrace());
+    }
+}
+
+// メインルーチン
+$someClass = new SomeClass();
+$someClass->doSomething1();
 ```
-####
+#### メモリの使用量を取得
 ```
+// 何も処理していないので、メモリ使用量は小さいはず。
+echo '現在のメモリ使用量(1回目)：', memory_get_usage(), PHP_EOL;
+
+// $listに10000要素入れる。これで少しメモリ使用量が増える。
+$list = [];
+for ($i = 0; $i < 10000; $i++) {
+    $list[] = $i;
+}
+echo '現在のメモリ使用量(2回目)：', memory_get_usage(), PHP_EOL;
+
+// $listを空にする。これでメモリ使用量が元に戻るはず。
+$list = null;
+echo '現在のメモリ使用量(3回目)：', memory_get_usage(), PHP_EOL;
+
+// $listに、前回より少なめの2000要素を入れる。
+// 2回目の出力よりは小さくなるはず。
+$list = [];
+for ($i = 0; $i < 2000; $i++) {
+    $list[] = $i;
+}
+echo '現在のメモリ使用量(4回目)：', memory_get_usage(), PHP_EOL;
+
+// 最大メモリ使用量は、$listに10000要素入っていた2回目の出力くらいになるはず。
+echo 'メモリの最大使用量：', memory_get_peak_usage(), PHP_EOL;
 ```
-####
+## Cookie
+#### Cookieをセット
 ```
+setcookie("name1", 'value1', time() + 60 * 60, '/', '', false, true);
 ```
-####
+#### 更新
 ```
+setcookie("name1", 'value1', time() + 60 * 60, '/', '', false, true);
+setcookie("name1", 'value2', time() + 60 * 20, '/', '', false, true);
 ```
-####
+#### 削除
 ```
+setcookie("name1", 'value1', time() + 60 * 60, '/', '', false, true);
+setcookie("name1", '', time() - 60 * 60, '/', '', false, true);
 ```
-####
+## Session
+#### sessionセット
 ```
+function validate()
+{
+    return ($_POST['email'] !== '' && $_POST['message'] !== '');
+}
+session_start();
+// 条件①
+if (isset($_POST['operation']) && $_POST['operation'] === 'inquiry') {
+    // 条件①-A
+    if (validate() === false) {
+        $message = 'メールアドレス・お問い合わせ内容のいずれも必須入力です。';
+        $data = [
+            'email' => $_POST['email'],
+            'message' => $_POST['message']
+        ];
+    // 条件①-B
+    } else {
+        $_SESSION['data'] = [
+            'email' => $_POST['email'],
+            'message' => $_POST['message']
+        ];
+        header('Location: confirm.php');
+        return;
+    }
+// 条件② 確認画面から戻るリンクを押された場合
+} elseif (isset($_SESSION['data'])) {
+    $data = [
+        'email' => $_SESSION['data']['email'],
+        'message' => $_SESSION['data']['message']
+    ];
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>セッションの利用 - honkaku</title>
+</head>
+<body>
+    <h2>お問い合わせ入力</h2>
+    <?php if (isset($message)) : ?>
+        <p style="color:red"><?=$message?></p>
+    <?php endif; ?>
+    <form name="inquiry-form" action="" method="POST">
+        ●メールアドレス：<br>
+        <input type="text" name="email" value="<?=isset($data['email']) ? $data['email'] : ''?>"><br>
+        ●お問い合わせ内容：<br>
+        <textarea name="message" cols="30" rows="4"><?=isset($data['message']) ? $data['message'] : ''?></textarea><br>
+        <button type="submit" name="operation" value="inquiry">送信</button>
+    </form>
+</body>
+</html>
+
 ```
-####
+#### session削除
 ```
+function deleteSession()
+{
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params['path'], $params['domain'],
+            $params['secure'], $params['httponly']
+        );
+    }
+}
+session_start();
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>セッションの利用 - honkaku</title>
+</head>
+<body>
+    <h2>お問い合わせ完了</h2>
+    <p>お問い合わせありがとうございました。デバッグ情報：</p>
+    <pre><?php print_r($_SESSION); ?></pre>
+    <?php $_SESSION = []; ?>
+    <?php deleteSession(); ?>
+    <?php session_destroy(); ?>
+</body>
+</html>
 ```
-####
+## ファイルアップロード
 ```
+/**
+ * ファイル名を元に拡張子を返す関数
+ */
+function getExtension(string $file): string
+{
+    return pathinfo($file, PATHINFO_EXTENSION);
+}
+
+/**
+ * アップロードファイルの妥当性をチェックする関数
+ */
+function validate(): array
+{
+    // PHPによるエラーを確認する
+    if ($_FILES['image1']['error'] !== UPLOAD_ERR_OK) {
+        return [false, 'アップロードエラーを検出しました。'];
+    }
+
+    // ファイル名から拡張子をチェックする
+    if (!in_array(getExtension($_FILES['image1']['name']), ['jpg', 'jpeg', 'png', 'gif'])) {
+        return [false, '画像ファイルのみアップロード可能です。'];
+    }
+
+    // ファイルの中身を見てMIMEタイプをチェックする
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $_FILES['image1']['tmp_name']);
+    finfo_close($finfo);
+    if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif'])) {
+        return [false, '不正な画像ファイル形式です。'];
+    }
+
+    // ファイルサイズをチェックする
+    if (filesize($_FILES['image1']['tmp_name']) > 1024 * 1024 * 2) {
+        return [false, 'ファイルサイズは2Mbまでとしてください。'];
+    }
+
+    return [true, null];
+}
+
+/**
+ * アップロード後の保存ファイル名を生成して返す関数
+ */
+function generateDestinationPath(): string
+{
+    return 'uploaded/' . date('Ymd-His-') . rand(10000, 99999) . '.' .
+        getExtension($_FILES['image1']['name']);
+}
+
+/**
+ * HTMLエンティティに変換する関数
+ */
+function escape(string $value): string
+{
+    return htmlspecialchars($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+}
+
+/*
+ * メインルーチン
+ */
+list($result, $message) = validate();
+if ($result !== true) {
+    echo '[Error]', $message;
+    return;
+}
+
+$destinationPath = generateDestinationPath();
+$moved = move_uploaded_file($_FILES['image1']['tmp_name'], $destinationPath);
+if ($moved !== true) {
+    echo 'アップロード処理中にエラーが発生しました。';
+    return;
+}
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ファイルアップロード - honkaku</title>
+</head>
+<body>
+    <p>アップロードに成功しました。保存された画像は以下です。</p>
+    <img src="<?=$destinationPath?>" style="width:300px"><br>
+    (保存ファイル名：<?=escape($destinationPath)?>)<br>
+    (元のファイル名：<?=escape($_FILES['image1']['name'])?>)
+</body>
+</html>
 ```
-####
+## 入力フォーム
 ```
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>入力フォーム - honkaku</title>
+</head>
+<body>
+    <h2>お問い合わせ画面</h2>
+    <form name="inquiry" action="thankyou.php" method="post">
+        <table border="1">
+            ### テキストボックス
+            <tr>
+                <th>お名前</th>
+                <td><input type="text" name="simei" value=""></td>
+            </tr>
+            <tr>
+                <th>メールアドレス</th>
+                <td><input type="text" name="email" value=""></td>
+            </tr>
+            ### セレクトボックス
+            <tr>
+                <th>地域</th>
+                <td>
+                  <select name="area">
+                    <option value=""></option>
+                    <option value="北海道">北海道</option>
+                    <option value="東北">東北</option>
+                    <option value="関東">関東</option>
+                    <option value="中部">中部</option>
+                    <option value="近畿">近畿</option>
+                    <option value="中国">中国</option>
+                    <option value="四国">四国</option>
+                    <option value="九州">九州</option>
+                  </select>
+                </td>
+            </tr>
+            ### チェックボックス
+            <tr>
+                <th>お問い合わせ種別</th>
+                <td>
+                    <input type="checkbox" name="type[]" value="ユーザ登録について"> ユーザ登録について<br>
+                    <input type="checkbox" name="type[]" value="商品に関するお問い合わせ"> 商品に関するお問い合わせ<br>
+                    <input type="checkbox" name="type[]" value="返品について"> 返品について<br>
+                </td>
+            </tr>
+            ### テキストエリア
+            <tr>
+                <th>お問い合わせ内容</th>
+                <td><textarea name="inquiry" rows="3" cols="50"></textarea></td>
+            </tr>
+            ### ラジオボタン
+            <tr>
+                <th>お得な情報をEメールで受け取りますか</th>
+                <td>
+                    <input type="radio" name="news_type" value="受け取ります"> 受け取ります<br>
+                    <input type="radio" name="news_type" value="受け取りません"> 受け取りません<br>
+                </td>
+            </tr>
+        </table>
+        <button type="submit" name="operation" value="send">送信する</button>
+    </form>
+</body>
+</html>
 ```
 ####
 ```
