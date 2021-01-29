@@ -1,0 +1,77 @@
+mailcather導入手順書
+
+前提条件
+GitBashでローカル環境に接続し、vagrantユーザで実行すること
+
+①Rootユーザに切り替える。
+sudo su
+
+②下記コマンドを上から順に実行
+yum install ruby
+yum -y install ruby-devel
+yum install gcc
+yum install gcc-c++
+yum install sqlite-devel
+gem install mailcatcher
+
+③php.iniの設定を変更
+php -r "echo phpinfo();" | grep "php.ini"
+sendmail_path = /usr/bin/env /usr/local/bin/catchmail --smtp-port 1025
+
+④vagrant起動時にmailcatcherを自動起動させるため、設定を追加する。
+vi /etc/rc.local
+/usr/bin/ruby /usr/local/bin/mailcatcher --http-ip 192.168.33.20
+
+⑤自動起動設定ファイルに実行権限を付与
+chmod u+x /etc/rc.d/rc.local
+
+⑤vagrantを再起動する。
+vagrant reload
+
+⑥ブラウザで下記のURLにアクセス
+mailcatcher --http-ip 192.168.33.20
+
+http://192.168.33.20:1080/
+
+
+
+==============================================================================
+その他情報
+
+vagrant上でメールキャッチャーを導入する場合、仮想サーバのIPアドレスを指定し、起動する必要がある。
+ポート番号1025が既に使用されていてエラーが発生しちえる場合、プロセスをkillする必要がある。
+
+メールキャッチャー実行
+mailcatcher --http-ip 192.168.33.20
+
+プロセスの実況状態を確認
+netstat -tulpn | grep :1025
+
+プロセスを削除
+kill (プロセスID)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

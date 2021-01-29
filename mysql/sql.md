@@ -54,6 +54,9 @@ select property_management_id from comforia.rooms
 where is_new_building = '1'
 );
 ```
+#### 一意でカラム値を取得
+select distinct(mansion_name) from comforia.originals;
+
 ## 結合
 #### 内部結合
 ```
@@ -97,3 +100,30 @@ from comforia.originals
 right join comforia.rooms on originals.mansion_code = rooms.mansion_code
 limit 100;
 ```
+## Select
+#### between
+```
+--範囲内のレコードを取得
+--2019/12/23 00:00:00 ~ 2019/12/24 00:00:00 を取得
+select * from comforia.rooms
+where management_change_date between '2019/12/23' and '2019/12/24';
+
+--2019/12/23 00:00:00 ~ 2019/12/23 23:59:59 を取得
+select * from comforia.rooms
+where management_change_date >= '2019/12/23'
+and management_change_date < '2019/12/24';
+```
+#### あいまい検索
+--あいまい検索
+select * from comforia.originals
+where mansion_name like '%プラザ%';
+
+#### where in
+--値で検索
+select * from comforia.originals
+where mansion_name in ('プラザ勝どき','プラザ旗の台');
+
+#### 自作ページネーション
+select * from comforia.originals order by id desc limit 3 offset 0;
+select * from comforia.originals order by id desc limit 3 offset 3;
+select * from comforia.originals order by id desc limit 3 offset 6;
