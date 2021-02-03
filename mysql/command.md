@@ -36,3 +36,18 @@ mysqladmin kill 1,2,3 -h localhost -u hoge
 ```
 SHOW GLOBAL VARIABLES LIKE 'innodb_buffer_pool_%';
 ```
+
+#### ユーザ名、ホスト名を確認
+```
+select user, host from mysql.user;
+```
+#### 権限の確認
+```
+show grants for 'ユーザー名'@'ホスト名'
+```
+#### 権限の付与
+権限のところにはselect、update、insert、delete、の組み合わせやallなどを記述。  
+- グローバルレベル：GRANT 権限 ON *.* TO user;
+- データベースレベル：GRANT 権限 ON db_name.* TO user;
+- テーブルレベル：GRANT 権限 ON db_name.table_name TO user;
+- カラムレベル：GRANT 権限 (カラム1, カラム2, ...) ON db_name.table_name TO user;
