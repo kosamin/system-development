@@ -5,6 +5,11 @@ php -r 'phpinfo();'
 php -r 'phpinfo();' | grep memory_limit
 ```
 
+#### ログ出力コード
+```
+file_put_contents(__DIR__ . "/../../../storage/logs/test.log", print_r($channelIds, true) ."\n",FILE_APPEND);
+```
+
 #### 改行コード
 | 改行コード | コード値 |用途 |
 | :---:    | :---: | :---: |
