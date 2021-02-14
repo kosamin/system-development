@@ -76,15 +76,51 @@ php artisan make:model "Model\Post" --factory
 
 
 ## コントローラ作成
+--model　はコントローラに名前空間のインポートを追加する。モデルが存在しない場合は、新規作成する。
 ```
 php artisan make:controller HelloController
+php artisan make:controller SampleController
 php artisan make:controller TopController --model Top
 ```
+#### リソースコントローラ
+````
+php artisan make:controller PhotoController --resource
+php artisan make:controller PhotoController --resource --model=Photo
+
+
+ルーティング設定
+use App\Http\Controllers\PhotoController;
+Route::resource('photos', PhotoController::class);
+
+#グループ
+Route::resources([
+    'photos' => PhotoController::class,
+    'posts' => PostController::class,
+]);
+
+# 一部のリソースルートのみ使用
+Route::resource('photos', PhotoController::class)->only([
+    'index', 'show'
+]);
+Route::resource('photos', PhotoController::class)->except([
+    'create', 'store', 'update', 'destroy'
+]);
+
+動詞	    URI	                    アクション	  ルート名
+GET	        /photos	                index	    photos.index
+GET	        /photos/create	        create	    photos.create
+POST	    /photos	                store	    photos.store
+GET	        /photos/{photo}	        show	    photos.show
+GET	        /photos/{photo}/edit	edit	    photos.edit
+PUT/PATCH	/photos/{photo}	        update	    photos.update
+DELETE	    /photos/{photo}	        destroy	    photos.destroy
+````
+
 
 ## モデル作成
 ```
 php artisan make:model Book
-php artisan make:model TeamMaster
+php artisan make:model Video
 php artisan make:controller TopController --model Top
 ```
 
@@ -95,4 +131,10 @@ php artisan make:command diffPopularRatio
 
 # バッチ実行
 php artisan command:
+```
+
+## tinker
+#### メールテスト
+```
+Mail::raw('test mail',function($message){$message->to('test@example.com')->subject('test');});
 ```
