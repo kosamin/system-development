@@ -9,6 +9,7 @@ php artisan make:migration create_channel_infos_table --create=channel_infos
 #### カラム変更
 ```
 composer require doctrine/dbal
+php artisan make:migration change_videos_table_column  --table=videos
 php artisan make:migration add_column_users_table --table=users
 php artisan make:migration add_column_login_infos_table --table=users
 ```
@@ -16,6 +17,7 @@ php artisan make:migration add_column_login_infos_table --table=users
 ```
 php artisan make:migration add_character_list_01_table --table=character_list_01
 php artisan make:migration add_videos_table --table=videos
+php artisan make:migration add_column_videos_table --table=videos
 ```
 #### マイグレーション実行
 ```
@@ -80,6 +82,9 @@ php artisan make:model "Model\Post" --factory
 ```
 php artisan make:controller HelloController
 php artisan make:controller SampleController
+php artisan make:controller LiveScheduleController
+php artisan make:controller SearchController
+php artisan make:controller UserController
 php artisan make:controller TopController --model Top
 ```
 #### リソースコントローラ
@@ -116,6 +121,45 @@ PUT/PATCH	/photos/{photo}	        update	    photos.update
 DELETE	    /photos/{photo}	        destroy	    photos.destroy
 ````
 
+## ミドルウェア作成
+```
+php artisan make:middleware Smartphone
+```
+```
+使い方
+①app/Http/Kernel.phpにミドルウェアを登録する
+②特定の画面のみミドルウェアを有効にしたい場合、ルーティングにミドルウェアの設定をする
+
+特定の画面のみにミドルウェアを有効にしたい場合
+protected $routeMiddleware = [
+    'admin_auth' => \App\Http\Middleware\AdminAuth::class
+];
+Route::group(['middleware' => 'admin_auth'], function(){
+    Route::get('middleware_test', 'HomeController@middleware_test');
+});
+
+全ての画面でミドルウェアを有効にしたい場合
+protected $middlewareGroups = [
+    'web' => [
+        \App\Http\Middleware\AdminAuth::class,
+    ],
+]
+```
+
+## サービスプロバイダの作成
+```
+php artisan make:provider AgentServiceProvider
+```
+```
+使い方
+①サービスプロバイダを作成する
+②プロバイダをconfig/app,phpに登録する
+'providers' => [
+    // Other Service Providers
+
+    App\Providers\ComposerServiceProvider::class,
+],
+```
 
 ## モデル作成
 ```
@@ -127,6 +171,7 @@ php artisan make:controller TopController --model Top
 ## バッチ処理作成
 ```
 php artisan make:command GetYoutubeVideos
+php artisan make:command PostTweet
 php artisan make:command diffPopularRatio
 
 # バッチ実行

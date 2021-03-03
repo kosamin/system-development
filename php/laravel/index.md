@@ -617,11 +617,14 @@ class AppServiceProvider extends ServiceProvider
 }
 ````
 #### viewコンポーザ
-viewがレンダリングされる前に実行する。
+ビューが読み込まれるタイミングで実行されるクラスメソッドやコールバック処理のこと。
+ビューが読み込まれるたびに実行したい処理がある場合に使う。
+viewがレンダリングされる直前に実行する。
 ````
 ````
 #### viewクリエーター
 アプリケーションがインスタンス化されたタイミングで実行する。
+機能はビューコンポーザと同じ。
 ````
 ````
 #### viewの最適化
@@ -630,8 +633,14 @@ viewがレンダリングされる前に実行する。
 ```
 php artisan view:cache
 php artisan view:clear
-````
+```
 # Bladeのテンプレート
+#### include
+別のビューを読み込む。読み込むBladeに変数を渡すことが可能。
+
+#### yield
+特定のセクションコンテンツを表示する。読み込むBladeに変数を渡すことは不可能。
+
 #### データの表示
 {{ }}エコー文は、XSS攻撃を防ぐために、PHPのhtmlspecialchars関数を通して自動的に送信する。
 PHP関数の結果をエコーできる。
@@ -676,53 +685,189 @@ Hello, {!! $name !!}.
     I don't have any arrays!
 @endif
 ````
+#### unless文（IFの逆）
+```
+@unless (Auth::check())
+    You are not signed in.
+@endunless
+```
+#### から判定(isset/empty)
+````
+@isset($name)
+    {{-- $recordsが定義されており、nullでも空でもない --}}
+    <p>{{ $name }}</p>
+@endisset
+
+@empty($name)
+        {{-- $recordsは空 --}}
+    <p>空です</p>
+@endempty
+````
+#### 認証ディレクティブ(@auth/@guest)
+@authおよび@guestディレクティブを使用すると、現在のユーザーが認証済みであるか、ゲストか判断できる。
+````
+@auth
+    // ユーザーは認証済み
+@endauth
+
+@guest
+    // ユーザーは認証されていない
+@endguest
+
+
+@auth('admin')
+    // ユーザーは認証済み
+@endauth
+
+@guest('admin')
+    // ユーザーは認証されていない
+@endguest
+````
+#### 環境ディレクティブ(@production/@env)
+実行環境ごとに処理を振り分けることができる。
+````
+@production
+    // 本番環境だけのコンテンツ
+@endproduction
+
+
+@env('local')
+    // アプリケーションは"local"環境で動いている
+@endenv
+@env(['staging', 'production'])
+    // アプリケーションは"staging"か"production"環境で動いている
+@endenv
+
+````
+#### switch文
+````
+@switch($i)
+    @case(1)
+        最初のケース
+        @break
+
+    @case(2)
+        ２番目のケース
+        @break
+
+    @default
+        デフォルトケース
+@endswitch
+````
+#### ループ(for/foreach)
+````
+@for ($i = 0; $i < 10; $i++)
+    The current value is {{ $i }}
+@endfor
+
+@foreach ($fruits as $fruit)
+    <p>This is user {{ $fruit }}</p>
+    <p>This is user {{ $fruit->id }}</p>
+@endforeach
+````
+#### ループ(continue/break)
+````
+@foreach ($users as $user)
+    @if ($user->type == 1)
+        @continue
+    @endif
+    <li>{{ $user->name }}</li>
+@endforeach
+
+@foreach ($users as $user)
+    @if ($user->number == 5)
+        @break
+    @endif
+    <li>{{ $user->name }}</li>
+@endforeach
+````
+#### ループ変数
+````
+@foreach ($users as $user)
+    @if ($loop->first)
+        ここは最初の繰り返し
+    @endif
+@endforeach
+
+$loop->index	現在の反復のインデックス（初期値０）
+$loop->iteration	現在の反復数（初期値１）。
+$loop->remaining	反復の残数。
+$loop->count	反復している配列の総アイテム数
+$loop->first	ループの最初の繰り返しか判定
+$loop->last	ループの最後の繰り返しか判定
+$loop->even	今回が偶数回目の繰り返しか判定
+$loop->odd	今回が奇数回目の繰り返しか判定
+$loop->depth	現在のループのネストレベル
+$loop->parent	ループがネストしている場合、親のループ変数
+````
+#### ビューの読み込み
+````
+@include('shared.errors')
+@include('view.name', ['status' => 'complete'])
+
+存在する場合に読み込む
+@includeIf('view.name', ['status' => 'complete'])
+
+特定の条件がTRUEのとき読み込む
+@includeWhen($boolean, 'view.name', ['status' => 'complete'])
+@includeUnless($boolean, 'view.name', ['status' => 'complete'])
+````
+#### レイアウトの定義
+````
+````
+## フォーム
+#### CSRFフィールド(@csrf)
+CSRF保護ミドルウェアがリクエストを検証できるようになる。
+````
+<form method="POST" action="/profile">
+    @csrf
+</form>
+````
+#### メソッドフィールド
+HTMLフォームはPUT、PATCH、DELETEリクエストを作成できないので設定する。
+````
+<form action="/foo/bar" method="POST">
+    @method('PUT')
+</form>
+````
+#### バリデーションエラー(@error)
+バリデーションエラーメッセージが存在するか確認できる。
+````
+<label for="title">Post Title</label>
+<input id="title" type="text" class="@error('title') is-invalid @enderror">
+
+@error('title')
+    <div class="alert alert-danger">{{ $message }}</div>
+@enderror
+````
+```
+<label for="email">Email address</label>
+<input id="email" type="email" class="@error('email', 'login') is-invalid @enderror">
+
+@error('email', 'login')
+    <div class="alert alert-danger">{{ $message }}</div>
+@enderror
+```
+#### php
+````
+@php
+    $counter = 1;
+@endphp
+````
+## コンポーネント
 #### 
 ````
 ````
-#### 
+## スケジューラ
+#### スケジューラのテスト
+Laravel環境の時刻を固定する。  
+全体の時間を変更したい場合はapp/Providers/AppServiceProvider.phpのboot()に追加する。
 ````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
-````
-#### 
-````
+php artisan schedule:run
+php artisan schedule:work
+
+$test_dt = Carbon::create(2021, 2, 22, 7);
+Carbon::setTestNow($test_dt);
 ````
 #### 
 ````

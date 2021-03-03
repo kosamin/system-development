@@ -126,7 +126,8 @@ foreach ($books as $book) {
     echo $book, PHP_EOL;
 }
 ```
-#### 文字を丸める
+#### 文字を丸める (mb_strimwidth)
+半角は１、全角は２としてカウントする。第４引数が末尾に追加される。
 ```
 $item = '万能MIXER―ご自宅でかんたんにジュースやスムージー、なんとふりかけまで！';
 echo mb_strimwidth($item, 0, 20, '…'); // 結果：「万能MIXER―ご自宅で…」
